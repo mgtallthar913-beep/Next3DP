@@ -1,5 +1,5 @@
 {
-  "name": "next3d-backend",
+  "name": "next3dp-backend",
   "version": "1.0.0",
   "description": "Backend for Next3D2 OCR",
   "main": "server.js",
@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "@google/genai": "^0.1.1",
+    "@google/generative-ai": "^0.21.0",
     "cors": "^2.8.5",
     "multer": "^1.4.5-lts.1"
   }
