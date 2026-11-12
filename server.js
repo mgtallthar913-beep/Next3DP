@@ -19,8 +19,8 @@ app.post('/api/ocr', upload.single('image'), async (req, res) => {
             return res.status(400).json({ success: false, error: 'ပုံ မပါဝင်ပါ' });
         }
 
-        // Gemini 1.5 Flash Model ကို အသုံးပြုခြင်း
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        // Gemini Model နာမည်ကို အမှန်ဖြစ်သော gemini-2.5-flash သို့ ပြင်ဆင်ထားသည်
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
         // ပုံကို Base64 ပြောင်းခြင်း
         const imagePart = {
