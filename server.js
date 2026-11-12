@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 app.use(cors());
@@ -10,8 +10,8 @@ app.use(express.json());
 // ဓာတ်ပုံခေတ္တသိမ်းရန် multer setup
 const upload = multer({ storage: multer.memoryStorage() });
 
-// GoogleGenAI ကို အသုံးပြုခြင်း (Environment ထဲက GEMINI_API_KEY ကို ကိုယ်တိုင်ယူပါမည်)
-const ai = new GoogleGenAI();
+// Gemini AI API Key (Render Environment Variables ထဲမှာ ထည့်ထားရပါမယ်)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/api/ocr', upload.single('image'), async (req, res) => {
     try {
@@ -19,8 +19,16 @@ app.post('/api/ocr', upload.single('image'), async (req, res) => {
             return res.status(400).json({ success: false, error: 'ပုံ မပါဝင်ပါ' });
         }
 
+        // Gemini 1.5 Flash မော်ဒယ်ကို သုံးခြင်း (SDK အဟောင်းနှင့် အကိုက်ညီဆုံးဖြစ်သည်)
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
         // ပုံကို Base64 ပြောင်းခြင်း
-        const base64Image = req.file.buffer.toString("base64");
+        const imagePart = {
+            inlineData: {
+                data: req.file.buffer.toString("base64"),
+                mimeType: req.file.mimetype
+            }
+        };
 
         const prompt = `ဤလက်ရေးဘောင်ချာပုံထဲမှ ထီဂဏန်းများနှင့် ငွေပမာဏများကို သေချာဖတ်ပါ။ 
         ဂဏန်း (number) နှင့် တန်ဖိုး (v1 သို့မဟုတ် v2) များကို JSON format ဖြင့်သာ အောက်ပါအတိုင်း အတိအကျ ပြန်ပေးပါ:
@@ -30,21 +38,8 @@ app.post('/api/ocr', upload.single('image'), async (req, res) => {
         ]
         အခြား စာသားများ လုံးဝမထည့်ဘဲ JSON array သက်သက်ကိုသာ ဖြေပါ။`;
 
-        // gemini-2.5-flash သို့မဟုတ် gemini-3.8-flash ကို အသုံးပြုခြင်း
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [
-                prompt,
-                {
-                    inlineData: {
-                        data: base64Image,
-                        mimeType: req.file.mimetype
-                    }
-                }
-            ]
-        });
-
-        const responseText = response.text();
+        const result = await model.generateContent([prompt, imagePart]);
+        const responseText = result.response.text();
         
         // JSON ကို သန့်စင်ပြီး ထုတ်ယူခြင်း
         const jsonMatch = responseText.match(/\[[\s\S]*\]/);
